@@ -26,7 +26,7 @@ canvas.addEventListener("mousedown", (e) => {
 });
 
 canvas.addEventListener("mousemove", (e) => {
-  if (cursor.active) {
+  if (cursor.active && ctx) {
     ctx.beginPath();
     ctx.moveTo(cursor.x, cursor.y);
     ctx.lineTo(e.offsetX, e.offsetY);
@@ -36,7 +36,7 @@ canvas.addEventListener("mousemove", (e) => {
   }
 });
 
-canvas.addEventListener("mouseup", (e) => {
+canvas.addEventListener("mouseup", () => {
   cursor.active = false;
 });
 
@@ -45,5 +45,7 @@ clearButton.innerHTML = "clear";
 document.body.append(clearButton);
 
 clearButton.addEventListener("click", () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (ctx) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
 });
