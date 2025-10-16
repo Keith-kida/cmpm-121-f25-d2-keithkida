@@ -29,7 +29,7 @@ canvas.addEventListener("mousedown", (e) => {
   redoLines.splice(0, redoLines.length);
   currentLine.push({ x: cursor.x, y: cursor.y });
 
-  redraw();
+  drawingChanged();
 });
 
 canvas.addEventListener("mousemove", (e) => {
@@ -39,7 +39,7 @@ canvas.addEventListener("mousemove", (e) => {
 
     currentLine.push({ x: cursor.x, y: cursor.y });
 
-    redraw();
+    drawingChanged();
   }
 });
 
@@ -47,7 +47,7 @@ canvas.addEventListener("mouseup", () => {
   cursor.active = false;
   currentLine = null;
 
-  redraw();
+  drawingChanged();
 });
 
 function redraw() {
@@ -65,6 +65,14 @@ function redraw() {
   }
 }
 
+function drawingChanged() {
+  canvas.dispatchEvent(new Event("drawing-changed"));
+}
+
+canvas.addEventListener("drawing-changed", () => {
+  redraw();
+});
+
 const clearButton = document.createElement("button");
 clearButton.innerHTML = "clear";
 document.body.append(clearButton);
@@ -72,6 +80,30 @@ document.body.append(clearButton);
 clearButton.addEventListener("click", () => {
   if (ctx) {
     lines.splice(0, lines.length);
-    redraw();
+    drawingChanged();
+  }
+});
+
+const undoButton = document.createElement("button");
+undoButton.innerHTML = "undo";
+document.body.append(undoButton);
+
+undoButton.addEventListener("click", () => {
+  if (ctx && lines.length > 0) {
+    const line = lines.pop()!;
+    redoLines.push(line);
+    drawingChanged();
+  }
+});
+
+const redoButton = document.createElement("button");
+redoButton.innerHTML = "redo";
+document.body.append(redoButton);
+
+redoButton.addEventListener("click", () => {
+  if (ctx && redoLines.length > 0) {
+    const line = redoLines.pop()!;
+    lines.push(line);
+    drawingChanged();
   }
 });
