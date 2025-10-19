@@ -38,9 +38,28 @@ class Line {
   }
 }
 
+class ToolPreview {
+  x: number;
+  y: number;
+  width: number;
+
+  constructor(x: number, y: number, width: number) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.width / 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
 const lines: Line[] = [];
 const redoLines: Line[] = [];
 let currentLine: Line | null = null;
+let toolPreview: ToolPreview | null = null;
 const cursor = { active: false, x: 0, y: 0 };
 let isDirty = true;
 let currentWidth = 2;
@@ -58,7 +77,6 @@ canvas.addEventListener("mousedown", (e) => {
 });
 
 canvas.addEventListener("mousemove", (e) => {
-  cursor.active = true;
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
 
@@ -67,7 +85,7 @@ canvas.addEventListener("mousemove", (e) => {
     drawingChanged();
   }
 
-  drawingChanged();
+  canvas.dispatchEvent(new Event("tool-moved"));
 });
 
 canvas.addEventListener("mouseup", () => {
@@ -90,6 +108,10 @@ function redraw() {
     ctx.fill();
   }
 
+  if (toolPreview) {
+    toolPreview.draw(ctx);
+  }
+
   isDirty = false;
 }
 
@@ -105,7 +127,14 @@ function drawingChanged() {
 }
 
 canvas.addEventListener("drawing-changed", markDirty);
-
+canvas.addEventListener("tool-moved", () => {
+  if (!cursor.active) {
+    toolPreview = new ToolPreview(cursor.x, cursor.y, currentWidth);
+  } else {
+    toolPreview = null;
+  }
+  markDirty();
+});
 const clearButton = document.createElement("button");
 clearButton.innerHTML = "clear";
 document.body.append(clearButton);
