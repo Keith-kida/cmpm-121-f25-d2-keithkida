@@ -13,9 +13,11 @@ const ctx = canvas.getContext("2d")!;
 
 class Line {
   points: { x: number; y: number }[] = [];
+  width: number;
 
-  constructor(x: number, y: number) {
+  constructor(x: number, y: number, width: number) {
     this.points.push({ x, y });
+    this.width = width;
   }
 
   drag(x: number, y: number) {
@@ -30,6 +32,7 @@ class Line {
       for (const { x, y } of this.points) {
         ctx.lineTo(x, y);
       }
+      ctx.lineWidth = this.width;
       ctx.stroke();
     }
   }
@@ -40,13 +43,14 @@ const redoLines: Line[] = [];
 let currentLine: Line | null = null;
 const cursor = { active: false, x: 0, y: 0 };
 let isDirty = true;
+let currentWidth = 2;
 
 canvas.addEventListener("mousedown", (e) => {
   cursor.active = true;
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
 
-  currentLine = new Line(cursor.x, cursor.y);
+  currentLine = new Line(cursor.x, cursor.y, currentWidth);
   lines.push(currentLine);
   redoLines.splice(0, redoLines.length);
 
@@ -136,5 +140,24 @@ redoButton.addEventListener("click", () => {
     drawingChanged();
   }
 });
+
+const thinButton = document.createElement("button");
+thinButton.innerHTML = "thin";
+document.body.append(thinButton);
+
+const thickButton = document.createElement("button");
+thickButton.innerHTML = "thick";
+document.body.append(thickButton);
+
+function selected(width: number) {
+  currentWidth = width;
+  thinButton.classList.toggle("selected", width === 2);
+  thickButton.classList.toggle("selected", width === 6);
+}
+
+thinButton.addEventListener("click", () => selected(2));
+thickButton.addEventListener("click", () => selected(6));
+
+selected(2);
 
 redraw();
