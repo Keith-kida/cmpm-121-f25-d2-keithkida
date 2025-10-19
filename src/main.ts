@@ -56,10 +56,34 @@ class ToolPreview {
   }
 }
 
-const lines: Line[] = [];
-const redoLines: Line[] = [];
+class Sticker {
+  x: number;
+  y: number;
+  emoji: string;
+  size: number;
+
+  constructor(x: number, y: number, emoji: string, size: number) {
+    this.x = x;
+    this.y = y;
+    this.emoji = emoji;
+    this.size = size;
+  }
+
+  drag(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+
+  display(ctx: CanvasRenderingContext2D) {
+    ctx.font = `${this.size}px serif`;
+    ctx.fillText(this.emoji, this.x, this.y);
+  }
+}
+
+const lines: (Line | Sticker)[] = [];
+const redoLines: (Line | Sticker)[] = [];
 let currentLine: Line | null = null;
-let toolPreview: ToolPreview | null = null;
+let toolPreview: ToolPreview | Sticker | null = null;
 const cursor = { active: false, x: 0, y: 0 };
 let isDirty = true;
 let currentWidth = 2;
@@ -68,6 +92,13 @@ canvas.addEventListener("mousedown", (e) => {
   cursor.active = true;
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
+
+  if (currentSticker) {
+    const sticker = new Sticker(e.offsetX, e.offsetY, currentSticker, 24);
+    lines.push(sticker);
+    drawingChanged();
+    return;
+  }
 
   currentLine = new Line(cursor.x, cursor.y, currentWidth);
   lines.push(currentLine);
@@ -109,7 +140,11 @@ function redraw() {
   }
 
   if (toolPreview) {
-    toolPreview.draw(ctx);
+    if (toolPreview instanceof Sticker) {
+      toolPreview.display(ctx);
+    } else {
+      toolPreview.draw(ctx);
+    }
   }
 
   isDirty = false;
@@ -129,7 +164,11 @@ function drawingChanged() {
 canvas.addEventListener("drawing-changed", markDirty);
 canvas.addEventListener("tool-moved", () => {
   if (!cursor.active) {
-    toolPreview = new ToolPreview(cursor.x, cursor.y, currentWidth);
+    if (currentSticker) {
+      toolPreview = new Sticker(cursor.x, cursor.y, currentSticker, 24);
+    } else {
+      toolPreview = new ToolPreview(cursor.x, cursor.y, currentWidth);
+    }
   } else {
     toolPreview = null;
   }
@@ -170,6 +209,16 @@ redoButton.addEventListener("click", () => {
   }
 });
 
+const drawButton = document.createElement("button");
+drawButton.textContent = "✏️ Draw";
+document.body.append(drawButton);
+
+drawButton.addEventListener("click", () => {
+  currentSticker = null;
+  toolPreview = null;
+  canvas.dispatchEvent(new Event("tool-moved"));
+});
+
 const thinButton = document.createElement("button");
 thinButton.innerHTML = "thin";
 document.body.append(thinButton);
@@ -188,5 +237,19 @@ thinButton.addEventListener("click", () => selected(2));
 thickButton.addEventListener("click", () => selected(6));
 
 selected(2);
+
+const stickers = ["🦊", "🦝", "🐮"];
+let currentSticker: string | null = null;
+
+stickers.forEach((emoji) => {
+  const btn = document.createElement("button");
+  btn.textContent = emoji;
+  document.body.append(btn);
+  btn.addEventListener("click", () => {
+    currentSticker = emoji;
+    toolPreview = null;
+    canvas.dispatchEvent(new Event("tool-moved"));
+  });
+});
 
 redraw();
