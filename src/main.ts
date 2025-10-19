@@ -11,36 +11,59 @@ document.body.append(canvas);
 
 const ctx = canvas.getContext("2d")!;
 
-type Point = { x: number; y: number };
-type Line = Point[];
+class Line {
+  points: { x: number; y: number }[] = [];
+
+  constructor(x: number, y: number) {
+    this.points.push({ x, y });
+  }
+
+  drag(x: number, y: number) {
+    this.points.push({ x, y });
+  }
+
+  display(ctx: CanvasRenderingContext2D) {
+    if (this.points.length > 1) {
+      ctx.beginPath();
+      const first = this.points[0]!;
+      ctx.moveTo(first.x, first.y);
+      for (const { x, y } of this.points) {
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  }
+}
 
 const lines: Line[] = [];
 const redoLines: Line[] = [];
 let currentLine: Line | null = null;
 const cursor = { active: false, x: 0, y: 0 };
+let isDirty = true;
 
 canvas.addEventListener("mousedown", (e) => {
   cursor.active = true;
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
 
-  currentLine = [];
+  currentLine = new Line(cursor.x, cursor.y);
   lines.push(currentLine);
   redoLines.splice(0, redoLines.length);
-  currentLine.push({ x: cursor.x, y: cursor.y });
 
   drawingChanged();
 });
 
 canvas.addEventListener("mousemove", (e) => {
-  if (cursor.active && ctx && currentLine) {
-    cursor.x = e.offsetX;
-    cursor.y = e.offsetY;
+  cursor.active = true;
+  cursor.x = e.offsetX;
+  cursor.y = e.offsetY;
 
-    currentLine.push({ x: cursor.x, y: cursor.y });
-
+  if (currentLine) {
+    currentLine.drag(cursor.x, cursor.y);
     drawingChanged();
   }
+
+  drawingChanged();
 });
 
 canvas.addEventListener("mouseup", () => {
@@ -52,16 +75,24 @@ canvas.addEventListener("mouseup", () => {
 
 function redraw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   for (const line of lines) {
-    if (line.length > 1) {
-      ctx.beginPath();
-      const { x, y } = line[0]!;
-      ctx.moveTo(x, y);
-      for (const { x, y } of line) {
-        ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
+    line.display(ctx);
+  }
+
+  if (cursor.active) {
+    ctx.beginPath();
+    ctx.arc(cursor.x, cursor.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  isDirty = false;
+}
+
+function markDirty() {
+  if (!isDirty) {
+    isDirty = true;
+    requestAnimationFrame(redraw);
   }
 }
 
@@ -69,9 +100,7 @@ function drawingChanged() {
   canvas.dispatchEvent(new Event("drawing-changed"));
 }
 
-canvas.addEventListener("drawing-changed", () => {
-  redraw();
-});
+canvas.addEventListener("drawing-changed", markDirty);
 
 const clearButton = document.createElement("button");
 clearButton.innerHTML = "clear";
@@ -107,3 +136,5 @@ redoButton.addEventListener("click", () => {
     drawingChanged();
   }
 });
+
+redraw();
