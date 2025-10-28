@@ -175,7 +175,7 @@ canvas.addEventListener("tool-moved", () => {
   markDirty();
 });
 const clearButton = document.createElement("button");
-clearButton.innerHTML = "clear";
+clearButton.innerHTML = "clear all";
 document.body.append(clearButton);
 
 clearButton.addEventListener("click", () => {
@@ -186,7 +186,7 @@ clearButton.addEventListener("click", () => {
 });
 
 const undoButton = document.createElement("button");
-undoButton.innerHTML = "undo";
+undoButton.innerHTML = "undo action";
 document.body.append(undoButton);
 
 undoButton.addEventListener("click", () => {
@@ -198,7 +198,7 @@ undoButton.addEventListener("click", () => {
 });
 
 const redoButton = document.createElement("button");
-redoButton.innerHTML = "redo";
+redoButton.innerHTML = "redo action";
 document.body.append(redoButton);
 
 redoButton.addEventListener("click", () => {
@@ -210,7 +210,7 @@ redoButton.addEventListener("click", () => {
 });
 
 const drawButton = document.createElement("button");
-drawButton.textContent = "Draw";
+drawButton.textContent = "Marker";
 document.body.append(drawButton);
 
 drawButton.addEventListener("click", () => {
@@ -229,8 +229,8 @@ document.body.append(thickButton);
 
 function selected(width: number) {
   currentWidth = width;
-  thinButton.classList.toggle("selected", width === 2);
-  thickButton.classList.toggle("selected", width === 6);
+  thinButton.classList.toggle("selected", width === 4);
+  thickButton.classList.toggle("selected", width === 8);
 }
 
 thinButton.addEventListener("click", () => selected(2));
@@ -238,7 +238,7 @@ thickButton.addEventListener("click", () => selected(6));
 
 selected(2);
 
-const stickers = ["🦊", "🦝", "🐮"];
+const animalStickers = ["🦊", "🦝", "🐮", "😺", "🐺"];
 let currentSticker: string | null = null;
 
 const stickerContainer = document.createElement("div");
@@ -248,7 +248,7 @@ function renderStickers() {
   const oldButtons = document.querySelectorAll(".sticker-btn");
   oldButtons.forEach((btn) => btn.remove());
 
-  stickers.forEach((emoji) => {
+  animalStickers.forEach((emoji) => {
     const btn = document.createElement("button");
     btn.textContent = emoji;
     stickerContainer.append(btn);
@@ -267,7 +267,7 @@ document.body.append(customSticker);
 customSticker.addEventListener("click", () => {
   const emoji = prompt("Enter your custom emoji:");
   if (emoji) {
-    stickers.push(emoji);
+    animalStickers.push(emoji);
     renderStickers();
   }
 });
