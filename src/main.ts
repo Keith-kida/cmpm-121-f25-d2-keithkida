@@ -210,7 +210,7 @@ redoButton.addEventListener("click", () => {
 });
 
 const drawButton = document.createElement("button");
-drawButton.textContent = "✏️ Draw";
+drawButton.textContent = "Draw";
 document.body.append(drawButton);
 
 drawButton.addEventListener("click", () => {
@@ -241,15 +241,37 @@ selected(2);
 const stickers = ["🦊", "🦝", "🐮"];
 let currentSticker: string | null = null;
 
-stickers.forEach((emoji) => {
-  const btn = document.createElement("button");
-  btn.textContent = emoji;
-  document.body.append(btn);
-  btn.addEventListener("click", () => {
-    currentSticker = emoji;
-    toolPreview = null;
-    canvas.dispatchEvent(new Event("tool-moved"));
+const stickerContainer = document.createElement("div");
+document.body.append(stickerContainer);
+
+function renderStickers() {
+  const oldButtons = document.querySelectorAll(".sticker-btn");
+  oldButtons.forEach((btn) => btn.remove());
+
+  stickers.forEach((emoji) => {
+    const btn = document.createElement("button");
+    btn.textContent = emoji;
+    stickerContainer.append(btn);
+    btn.addEventListener("click", () => {
+      currentSticker = emoji;
+      toolPreview = null;
+      canvas.dispatchEvent(new Event("tool-moved"));
+    });
   });
+}
+
+const customSticker = document.createElement("button");
+customSticker.textContent = "Custom Sticker";
+document.body.append(customSticker);
+
+customSticker.addEventListener("click", () => {
+  const emoji = prompt("Enter your custom emoji:");
+  if (emoji) {
+    stickers.push(emoji);
+    renderStickers();
+  }
 });
+
+renderStickers();
 
 redraw();
