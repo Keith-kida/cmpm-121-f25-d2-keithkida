@@ -261,7 +261,7 @@ function renderStickers() {
 }
 
 const customSticker = document.createElement("button");
-customSticker.textContent = "Custom Sticker";
+customSticker.innerHTML = "Custom Sticker";
 document.body.append(customSticker);
 
 customSticker.addEventListener("click", () => {
@@ -271,6 +271,33 @@ customSticker.addEventListener("click", () => {
     renderStickers();
   }
 });
+
+const exportButton = document.createElement("button");
+exportButton.innerHTML = "export";
+document.body.append(exportButton);
+
+exportButton.addEventListener("click", () => {
+  exportImage();
+});
+
+function exportImage() {
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = canvas.width * 4;
+  exportCanvas.height = canvas.height * 4;
+  const exportCtx = exportCanvas.getContext("2d")!;
+
+  exportCtx.scale(4, 4);
+
+  for (const line of lines) {
+    line.display(exportCtx);
+  }
+
+  const dataUrl = exportCanvas.toDataURL();
+  const link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = "my_drawing.png";
+  link.click();
+}
 
 renderStickers();
 
