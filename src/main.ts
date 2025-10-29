@@ -90,8 +90,8 @@ class Sticker {
 }
 
 // Drawing state
-const lines: (Line | Sticker)[] = [];
-const redoLines: (Line | Sticker)[] = [];
+const drawingElements: (Line | Sticker)[] = [];
+const redoElements: (Line | Sticker)[] = [];
 let currentLine: Line | null = null;
 let toolPreview: ToolPreview | Sticker | null = null;
 const cursor = { active: false, x: 0, y: 0 };
@@ -107,14 +107,14 @@ canvas.addEventListener("mousedown", (e) => {
 
   if (currentSticker) {
     const sticker = new Sticker(e.offsetX, e.offsetY, currentSticker, 24);
-    lines.push(sticker);
+    drawingElements.push(sticker);
     drawingChanged();
     return;
   }
 
   currentLine = new Line(cursor.x, cursor.y, currentWidth, currentColor);
-  lines.push(currentLine);
-  redoLines.splice(0, redoLines.length);
+  drawingElements.push(currentLine);
+  redoElements.splice(0, redoElements.length);
 
   drawingChanged();
 });
@@ -142,7 +142,7 @@ canvas.addEventListener("mouseup", () => {
 function redraw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  for (const line of lines) {
+  for (const line of drawingElements) {
     line.display(ctx);
   }
 
@@ -171,7 +171,6 @@ function markDirty() {
   }
 }
 
-// Drawing changed
 function drawingChanged() {
   canvas.dispatchEvent(new Event("drawing-changed"));
 }
@@ -197,8 +196,8 @@ document.body.append(clearButton);
 
 clearButton.addEventListener("click", () => {
   if (ctx) {
-    lines.splice(0, lines.length);
-    drawingChanged();
+    drawingElements.splice(0, drawingElements.length);
+    markDirty();
   }
 });
 
@@ -208,10 +207,10 @@ undoButton.innerHTML = "undo action";
 document.body.append(undoButton);
 
 undoButton.addEventListener("click", () => {
-  if (ctx && lines.length > 0) {
-    const line = lines.pop()!;
-    redoLines.push(line);
-    drawingChanged();
+  if (ctx && drawingElements.length > 0) {
+    const line = drawingElements.pop()!;
+    redoElements.push(line);
+    markDirty();
   }
 });
 
@@ -221,10 +220,10 @@ redoButton.innerHTML = "redo action";
 document.body.append(redoButton);
 
 redoButton.addEventListener("click", () => {
-  if (ctx && redoLines.length > 0) {
-    const line = redoLines.pop()!;
-    lines.push(line);
-    drawingChanged();
+  if (ctx && redoElements.length > 0) {
+    const line = redoElements.pop()!;
+    drawingElements.push(line);
+    markDirty();
   }
 });
 
@@ -314,7 +313,7 @@ function exportImage() {
 
   exportCtx.scale(4, 4);
 
-  for (const line of lines) {
+  for (const line of drawingElements) {
     line.display(exportCtx);
   }
 
