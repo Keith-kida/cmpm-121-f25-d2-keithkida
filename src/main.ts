@@ -273,6 +273,7 @@ function renderStickers() {
 
   animalStickers.forEach((emoji) => {
     const btn = document.createElement("button");
+    btn.classList.add("sticker-btn");
     btn.textContent = emoji;
     stickerContainer.append(btn);
     btn.addEventListener("click", () => {
