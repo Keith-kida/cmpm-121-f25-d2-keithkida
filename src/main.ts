@@ -1,9 +1,11 @@
 import "./style.css";
 
+//Title
 const title = document.createElement("h1");
 title.textContent = "Let's Paint";
 document.body.append(title);
 
+//Canvas setup
 const canvas = document.createElement("canvas");
 canvas.width = 256;
 canvas.height = 256;
@@ -11,13 +13,16 @@ document.body.append(canvas);
 
 const ctx = canvas.getContext("2d")!;
 
+//Line class
 class Line {
   points: { x: number; y: number }[] = [];
   width: number;
+  color: string;
 
-  constructor(x: number, y: number, width: number) {
+  constructor(x: number, y: number, width: number, color: string) {
     this.points.push({ x, y });
     this.width = width;
+    this.color = color;
   }
 
   drag(x: number, y: number) {
@@ -33,11 +38,13 @@ class Line {
         ctx.lineTo(x, y);
       }
       ctx.lineWidth = this.width;
+      ctx.strokeStyle = this.color;
       ctx.stroke();
     }
   }
 }
 
+//Tool previews
 class ToolPreview {
   x: number;
   y: number;
@@ -51,11 +58,13 @@ class ToolPreview {
 
   draw(ctx: CanvasRenderingContext2D) {
     ctx.beginPath();
+    ctx.fillStyle = currentColor;
     ctx.arc(this.x, this.y, this.width / 2, 0, Math.PI * 2);
     ctx.fill();
   }
 }
 
+//Sticker
 class Sticker {
   x: number;
   y: number;
@@ -80,6 +89,7 @@ class Sticker {
   }
 }
 
+// Drawing state
 const lines: (Line | Sticker)[] = [];
 const redoLines: (Line | Sticker)[] = [];
 let currentLine: Line | null = null;
@@ -87,7 +97,9 @@ let toolPreview: ToolPreview | Sticker | null = null;
 const cursor = { active: false, x: 0, y: 0 };
 let isDirty = true;
 let currentWidth = 2;
+let currentColor = "black";
 
+// mouse action
 canvas.addEventListener("mousedown", (e) => {
   cursor.active = true;
   cursor.x = e.offsetX;
@@ -100,7 +112,7 @@ canvas.addEventListener("mousedown", (e) => {
     return;
   }
 
-  currentLine = new Line(cursor.x, cursor.y, currentWidth);
+  currentLine = new Line(cursor.x, cursor.y, currentWidth, currentColor);
   lines.push(currentLine);
   redoLines.splice(0, redoLines.length);
 
@@ -126,6 +138,7 @@ canvas.addEventListener("mouseup", () => {
   drawingChanged();
 });
 
+// REDRAW
 function redraw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -150,6 +163,7 @@ function redraw() {
   isDirty = false;
 }
 
+// Mark dirty
 function markDirty() {
   if (!isDirty) {
     isDirty = true;
@@ -157,6 +171,7 @@ function markDirty() {
   }
 }
 
+// Drawing changed
 function drawingChanged() {
   canvas.dispatchEvent(new Event("drawing-changed"));
 }
@@ -174,6 +189,8 @@ canvas.addEventListener("tool-moved", () => {
   }
   markDirty();
 });
+
+// Buttons: CLEAR
 const clearButton = document.createElement("button");
 clearButton.innerHTML = "clear all";
 document.body.append(clearButton);
@@ -185,6 +202,7 @@ clearButton.addEventListener("click", () => {
   }
 });
 
+// Buttons: UNDO
 const undoButton = document.createElement("button");
 undoButton.innerHTML = "undo action";
 document.body.append(undoButton);
@@ -197,6 +215,7 @@ undoButton.addEventListener("click", () => {
   }
 });
 
+// Buttons: REDO
 const redoButton = document.createElement("button");
 redoButton.innerHTML = "redo action";
 document.body.append(redoButton);
@@ -209,22 +228,25 @@ redoButton.addEventListener("click", () => {
   }
 });
 
+// Buttons: MARKER
 const drawButton = document.createElement("button");
-drawButton.textContent = "Marker";
+drawButton.textContent = "Marker/Color Change";
 document.body.append(drawButton);
 
 drawButton.addEventListener("click", () => {
+  currentColor = "hsl(" + Math.random() * 360 + ", 100%, 50%)";
   currentSticker = null;
   toolPreview = null;
   canvas.dispatchEvent(new Event("tool-moved"));
 });
 
+// Buttons: WIDTH
 const thinButton = document.createElement("button");
-thinButton.innerHTML = "thin";
+thinButton.innerHTML = "delicate";
 document.body.append(thinButton);
 
 const thickButton = document.createElement("button");
-thickButton.innerHTML = "thick";
+thickButton.innerHTML = "bold";
 document.body.append(thickButton);
 
 function selected(width: number) {
@@ -233,11 +255,12 @@ function selected(width: number) {
   thickButton.classList.toggle("selected", width === 8);
 }
 
-thinButton.addEventListener("click", () => selected(2));
-thickButton.addEventListener("click", () => selected(6));
+thinButton.addEventListener("click", () => selected(4));
+thickButton.addEventListener("click", () => selected(8));
 
-selected(2);
+selected(4);
 
+// Buttons: STICKERS
 const animalStickers = ["🦊", "🦝", "🐮", "😺", "🐺"];
 let currentSticker: string | null = null;
 
@@ -260,8 +283,9 @@ function renderStickers() {
   });
 }
 
+// Sticker customization
 const customSticker = document.createElement("button");
-customSticker.innerHTML = "Custom Sticker";
+customSticker.innerHTML = "Add Emoji";
 document.body.append(customSticker);
 
 customSticker.addEventListener("click", () => {
@@ -272,6 +296,7 @@ customSticker.addEventListener("click", () => {
   }
 });
 
+// Buttons: EXPORT
 const exportButton = document.createElement("button");
 exportButton.innerHTML = "export";
 document.body.append(exportButton);
